@@ -48,6 +48,21 @@
   .bar .row { margin: 0 0 8px; }
   #msg { margin: 0; font-size: .85rem; color: var(--sub); min-height: 1.4em; }
   .back { margin-bottom: 8px; }
+  @media (orientation: landscape) and (max-height: 520px) {
+    body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+    main { max-width: 48em; }
+    h1 { font-size: 1.15rem; margin: 8px 0 2px; }
+    .sub { font-size: .8rem; line-height: 1.5; margin-bottom: 8px; }
+    textarea { min-height: 34vh; }
+    #reader { font-size: 1.1rem; line-height: 1.9; }
+    button, .filebtn, select { min-height: 44px; }
+    .bar { padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+    .bar .in { max-width: 60em; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+    .bar .row { margin: 0; flex-wrap: nowrap; }
+    .bar .row:first-child { flex: 1 1 260px; }
+    #msg { flex: 1 1 100%; font-size: .75rem; min-height: 0; line-height: 1.2; }
+    button.main { font-size: 1.05rem; }
+  }
 </style>
 </head>
 <body>
@@ -121,7 +136,7 @@ function mark(i){
   spans.forEach(function(s){ s.classList.remove('on'); });
   var s=spans[i]; if(!s) return; s.classList.add('on');
   var r=s.getBoundingClientRect(), h=window.innerHeight;
-  if(r.top<70||r.bottom>h-200){ window.scrollTo({top:window.scrollY+r.top-h*0.3, behavior:'smooth'}); }
+  if(r.top<70||r.bottom>h-(window.innerHeight<520?110:200)){ window.scrollTo({top:window.scrollY+r.top-h*0.3, behavior:'smooth'}); }
 }
 
 function loadVoices(){
