@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#140c2a">
+<title>よみあげ</title>
+<meta name="description" content="文章をはりつけると、スマホの声で読み上げてくれる、無料のアプリです。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="よみあげ">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:type" content="website">
+<meta property="og:title" content="よみあげ">
+<meta property="og:description" content="文章をはりつけると、スマホの声で読み上げてくれる、無料のアプリです。">
+<meta property="og:image" content="https://roguepink.github.io/yomiage/ogp.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { color-scheme: dark; --bg:#140c2a; --card:#21173f; --fg:#f4f0ff; --sub:#b9aedd; --accent:#ffe066; --hl:#4b3a86; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg);
+    font-family: "Hiragino Sans","Noto Sans JP",system-ui,sans-serif; }
+  body { padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(190px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  main { max-width: 36em; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 18px 0 4px; }
+  .sub { color: var(--sub); font-size: .9rem; line-height: 1.7; margin: 0 0 14px; }
+  textarea { width: 100%; min-height: 38vh; font: inherit; font-size: 1.05rem; line-height: 1.8; padding: 12px; border-radius: 12px;
+    border: 2px solid #3a2d6a; background: var(--card); color: var(--fg); resize: vertical; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+  button, .filebtn, select { font: inherit; min-height: 52px; border-radius: 12px; border: 2px solid #3a2d6a; background: var(--card); color: var(--fg); padding: 0 16px; font-size: 1rem; touch-action: manipulation; }
+  button.main { background: var(--accent); color: #1b1430; border-color: var(--accent); font-weight: 800; flex: 1; font-size: 1.15rem; }
+  .filebtn { display: inline-flex; align-items: center; cursor: pointer; }
+  .filebtn input { display: none; }
+  button:focus-visible, select:focus-visible, textarea:focus-visible, .filebtn:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+  label { font-size: .9rem; color: var(--sub); display: flex; gap: 6px; align-items: center; }
+  #reader { font-size: 1.2rem; line-height: 2; }
+  #reader p { margin: 0 0 1em; }
+  #reader span { cursor: pointer; border-radius: 6px; }
+  #reader span.on { background: var(--hl); color: #fff; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #1c1236; border-top: 2px solid #3a2d6a;
+    padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); z-index: 5; }
+  .bar .in { max-width: 36em; margin: 0 auto; }
+  .bar .row { margin: 0 0 8px; }
+  #msg { margin: 0; font-size: .85rem; color: var(--sub); min-height: 1.4em; }
+  .back { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <section id="edit">
+    <h1>📖 よみあげ</h1>
+    <p class="sub">読みたい文章を、下にはりつけてください。ボタンを押すと、スマホの声で読んでくれます。<br>文章は、このスマホの中だけに残ります。どこにも送りません。</p>
+    <textarea id="src" placeholder="ここに文章をはりつけ" aria-label="読み上げる文章"></textarea>
+    <div class="row">
+      <label class="filebtn">📄 ファイルをえらぶ<input id="file" type="file" accept=".txt,.md,text/plain,text/markdown"></label>
+      <button id="clear" type="button">消す</button>
+    </div>
+  </section>
+  <section id="view" hidden>
+    <div class="row back"><button id="toedit" type="button">← 文章をなおす</button></div>
+    <div id="reader" lang="ja"></div>
+  </section>
+</main>
+<div class="bar"><div class="in">
+  <div class="row">
+    <button class="main" id="play" type="button">▶ 読み上げ</button>
+    <button id="stop" type="button">■ 最初へ</button>
+  </div>
+  <div class="row">
+    <label for="rate">速さ <select id="rate"><option value="0.8">ゆっくり</option><option value="1" selected>ふつう</option><option value="1.2">少し速い</option><option value="1.5">速い</option></select></label>
+    <label for="voice">声 <select id="voice"></select></label>
+  </div>
+  <p id="msg" role="status"></p>
+</div></div>
+<script>
+(function(){
+'use strict';
+var synth = window.speechSynthesis;
+var $ = function(id){ return document.getElementById(id); };
+var src=$('src'), reader=$('reader'), msg=$('msg'), playBtn=$('play');
+var rate=$('rate'), vsel=$('voice');
+var sents=[], spans=[], cur=0, playing=false, token=0, voices=[], wake=null;
+
+function save(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function say(t){ msg.textContent=t; }
+
+/* 文を区切る: 。！？ のあとで切る。長すぎる文は 読点で さらに切る(Chrome は長い読み上げが途中で止まるため) */
+function splitText(text){
+  var out=[], paras=text.replace(/\r/g,'').split(/\n+/);
+  paras.forEach(function(p,pi){
+    p=p.trim(); if(!p) return;
+    var parts=p.match(/[^。！？!?]+[。！？!?」』）)]*|[。！？!?]+/g)||[p];
+    var buf=[];
+    parts.forEach(function(x){
+      x=x.trim(); if(!x) return;
+      if(x.length>80){ (x.match(/[^、，,]+[、，,]?/g)||[x]).forEach(function(y){ buf.push(y); }); }
+      else buf.push(x);
+    });
+    buf.forEach(function(x,i){ out.push({t:x, p:pi}); });
+  });
+  return out;
+}
+function spoken(t){ return t.replace(/――|──|—+/g,'、').replace(/…+|\.{3,}/g,'、').replace(/[〈〉《》「」『』]/g,'').replace(/\s+/g,' '); }
+
+function build(){
+  var text=src.value; save('yomi.text',text);
+  sents=splitText(text); reader.innerHTML=''; spans=[];
+  var lastP=-1, pEl=null;
+  sents.forEach(function(s,i){
+    if(s.p!==lastP){ pEl=document.createElement('p'); reader.appendChild(pEl); lastP=s.p; }
+    var sp=document.createElement('span'); sp.textContent=s.t; sp.dataset.i=i; pEl.appendChild(sp); spans.push(sp);
+  });
+}
+function mark(i){
+  spans.forEach(function(s){ s.classList.remove('on'); });
+  var s=spans[i]; if(!s) return; s.classList.add('on');
+  var r=s.getBoundingClientRect(), h=window.innerHeight;
+  if(r.top<70||r.bottom>h-200){ window.scrollTo({top:window.scrollY+r.top-h*0.3, behavior:'smooth'}); }
+}
+
+function loadVoices(){
+  if(!synth) return;
+  var all=synth.getVoices()||[];
+  voices=all.filter(function(v){ return /^ja/i.test(v.lang); });
+  vsel.innerHTML='';
+  if(!voices.length){ var o=document.createElement('option'); o.textContent='標準の声'; vsel.appendChild(o); return; }
+  voices.forEach(function(v,i){ var o=document.createElement('option'); o.value=i; o.textContent=v.name; vsel.appendChild(o); });
+  var sv=load('yomi.voice'); if(sv){ for(var i=0;i<voices.length;i++){ if(voices[i].name===sv) vsel.value=i; } }
+}
+function keepAwake(on){
+  try{
+    if(on && navigator.wakeLock){ navigator.wakeLock.request('screen').then(function(l){ wake=l; }).catch(function(){}); }
+    else if(!on && wake){ wake.release(); wake=null; }
+  }catch(e){}
+}
+function setPlaying(p){ playing=p; playBtn.textContent=p?'❚❚ 止める':(cur>0?'▶ つづきから':'▶ 読み上げ'); keepAwake(p); }
+
+function speakAt(i){
+  if(i>=sents.length){ cur=0; setPlaying(false); say('おわりです。'); save('yomi.pos','0'); return; }
+  cur=i; mark(i); save('yomi.pos',String(i));
+  var my=++token;
+  var u=new SpeechSynthesisUtterance(spoken(sents[i].t));
+  u.lang='ja-JP'; u.rate=parseFloat(rate.value)||1;
+  if(voices.length && voices[vsel.value]) u.voice=voices[vsel.value];
+  u.onend=function(){ if(playing && my===token) speakAt(i+1); };
+  u.onerror=function(e){ if(my!==token) return; if(e && (e.error==='canceled'||e.error==='interrupted')) return;
+    setPlaying(false); say('読み上げが止まりました。もう一度「読み上げ」を押してください。'); };
+  synth.speak(u);
+  say((i+1)+' / '+sents.length+' 文めを読んでいます');
+}
+function start(i){ synth.cancel(); token++; setPlaying(true); setTimeout(function(){ speakAt(i); },60); }
+function pause(){ token++; synth.cancel(); setPlaying(false); say((cur+1)+' 文めで止めました。'); }
+
+function showView(){
+  if(!src.value.trim()){ say('先に、文章をはりつけてください。'); return false; }
+  build(); $('edit').hidden=true; $('view').hidden=false; window.scrollTo(0,0); return true;
+}
+playBtn.addEventListener('click', function(){
+  if(!synth){ say('この画面では読み上げが使えません。Chrome で開いてください。'); return; }
+  if(playing){ pause(); return; }
+  if($('view').hidden){ var sp=parseInt(load('yomi.pos')||'0',10); if(!showView()) return; cur = (sp>0&&sp<sents.length)?sp:0; }
+  start(cur);
+});
+$('stop').addEventListener('click', function(){
+  token++; if(synth) synth.cancel(); cur=0; save('yomi.pos','0'); setPlaying(false);
+  spans.forEach(function(s){ s.classList.remove('on'); }); window.scrollTo(0,0); say('最初に戻しました。');
+});
+$('toedit').addEventListener('click', function(){
+  token++; if(synth) synth.cancel(); setPlaying(false); $('view').hidden=true; $('edit').hidden=false; window.scrollTo(0,0); say('');
+});
+$('clear').addEventListener('click', function(){ src.value=''; save('yomi.text',''); save('yomi.pos','0'); cur=0; say('文章を消しました。'); });
+reader.addEventListener('click', function(e){ var t=e.target; if(t && t.dataset && t.dataset.i!==undefined && synth){ start(parseInt(t.dataset.i,10)); } });
+rate.addEventListener('change', function(){ save('yomi.rate',rate.value); if(playing) start(cur); });
+vsel.addEventListener('change', function(){ if(voices[vsel.value]) save('yomi.voice',voices[vsel.value].name); if(playing) start(cur); });
+src.addEventListener('input', function(){ save('yomi.text',src.value); save('yomi.pos','0'); cur=0; });
+$('file').addEventListener('change', function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var r=new FileReader(); r.onload=function(){ src.value=String(r.result||''); save('yomi.text',src.value); save('yomi.pos','0'); cur=0; say('「'+f.name+'」を読みこみました。'); };
+  r.onerror=function(){ say('ファイルを読めませんでした。'); }; r.readAsText(f,'utf-8'); e.target.value='';
+});
+document.addEventListener('visibilitychange', function(){ if(document.hidden){ /* 画面が消えると止まることがある */ } else if(playing){ keepAwake(true); } });
+window.addEventListener('pagehide', function(){ if(synth) synth.cancel(); });
+
+src.value = load('yomi.text')||'';
+var r0=load('yomi.rate'); if(r0) rate.value=r0;
+cur = parseInt(load('yomi.pos')||'0',10)||0; if(cur>0) playBtn.textContent='▶ つづきから';
+if(!synth){ say('この画面では読み上げが使えません。Chrome で開いてください。'); }
+else { loadVoices(); if(synth.onvoiceschanged!==undefined) synth.onvoiceschanged=loadVoices; if(!src.value) say('文章をはりつけて「読み上げ」を押してください。'); }
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+window.__yomi = { splitText: splitText };
+})();
+</script>
+<script>
+  window.INSTALL_GATE = { id: 'yomiage', name: 'よみあげ', icon: 'icon-192.png', tagline: '文章を、声で読んでくれる', desc: '読みたい文章をはりつけると、スマホの声で読み上げてくれます。',
+    points: ['無料・広告なし・登録なし', '文章はスマホの中だけに残ります', '止めたところから、つづきを読めます'], shots: [], badges: ['無料', '広告なし', '登録なし'], playLabel: '▶ このまま読む', installLabel: '📲 インストール' };
+</script>
+<script src="install.js"></script>
+</body>
+</html>
