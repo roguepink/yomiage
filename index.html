@@ -156,21 +156,49 @@ function keepAwake(on){
 }
 function setPlaying(p){ playing=p; playBtn.textContent=p?'❚❚ 止める':(cur>0?'▶ つづきから':'▶ 読み上げ'); keepAwake(p); }
 
-function speakAt(i){
+var watch=null, endWatch=null;
+function clearWatch(){ if(watch){ clearTimeout(watch); watch=null; } if(endWatch){ clearTimeout(endWatch); endWatch=null; } }
+/* 声が出ないとき、スマホの何が原因かを 画面に出す */
+function errText(c){
+  if(c==='not-allowed') return '音を出す許可がありません。もう一度「読み上げ」を押してください。';
+  if(c==='language-unavailable'||c==='voice-unavailable') return '日本語の声が入っていないようです。スマホの設定の「テキスト読み上げ」で、日本語の音声データを入れてください。';
+  if(c==='synthesis-failed'||c==='synthesis-unavailable') return 'スマホの読み上げの部品が動いていないようです。設定の「テキスト読み上げ」を確認してください。';
+  if(c==='audio-busy'||c==='audio-hardware') return '音が出せません。ほかのアプリが音を使っていないか、音量が0になっていないか見てください。';
+  return '読み上げが止まりました('+(c||'不明')+')。もう一度「読み上げ」を押してください。';
+}
+function speakAt(i, retry){
+  clearWatch();
   if(i>=sents.length){ cur=0; setPlaying(false); say('おわりです。'); save('yomi.pos','0'); return; }
   cur=i; mark(i); save('yomi.pos',String(i));
-  var my=++token;
-  var u=new SpeechSynthesisUtterance(spoken(sents[i].t));
+  var txt=spoken(sents[i].t);
+  /* 読む字がない行(記号だけ)は、読まずに次へ。空の読み上げは スマホで止まることがある */
+  if(!/[^\s、。,.!?！？]/.test(txt)){ speakAt(i+1); return; }
+  var my=++token, started=false;
+  var u=new SpeechSynthesisUtterance(txt);
   u.lang='ja-JP'; u.rate=parseFloat(rate.value)||1;
-  if(voices.length && voices[vsel.value]) u.voice=voices[vsel.value];
-  u.onend=function(){ if(playing && my===token) speakAt(i+1); };
-  u.onerror=function(e){ if(my!==token) return; if(e && (e.error==='canceled'||e.error==='interrupted')) return;
-    setPlaying(false); say('読み上げが止まりました。もう一度「読み上げ」を押してください。'); };
+  /* 2回目(やり直し)は 声を指定しない。スマホの標準の声で読む */
+  if(!retry && voices.length && voices[vsel.value]) u.voice=voices[vsel.value];
+  u.onstart=function(){ if(my!==token) return; started=true; if(watch){ clearTimeout(watch); watch=null; } };
+  u.onend=function(){ if(my!==token) return; clearWatch(); if(playing) speakAt(i+1); };
+  u.onerror=function(e){ if(my!==token) return; clearWatch();
+    if(e && (e.error==='canceled'||e.error==='interrupted')) return;
+    if(!retry && playing){ token++; try{ synth.cancel(); }catch(x){} setTimeout(function(){ if(playing) speakAt(i,true); },300); return; }
+    setPlaying(false); say(errText(e&&e.error)); };
   synth.speak(u);
   say((i+1)+' / '+sents.length+' 文めを読んでいます');
+  /* 4秒たっても 声が始まらないとき: 1回だけやり直す。それでもだめなら 理由を出して止まる */
+  watch=setTimeout(function(){ if(my!==token||started||!playing) return;
+    token++; try{ synth.cancel(); }catch(x){}
+    if(!retry){ setTimeout(function(){ if(playing) speakAt(i,true); },300); }
+    else { setPlaying(false); say('声が出ませんでした。音量(メディアの音)と、設定の「テキスト読み上げ」の日本語の音声データを確かめてください。'); }
+  },4000);
+  /* 終わりの合図が来ないスマホ用: 長さから見積もった時間を過ぎたら 次へ進む */
+  endWatch=setTimeout(function(){ if(my!==token||!playing) return;
+    token++; try{ synth.cancel(); }catch(x){} setTimeout(function(){ if(playing) speakAt(i+1); },200);
+  }, Math.round((txt.length*0.7/(u.rate||1)+12)*1000));
 }
-function start(i){ synth.cancel(); token++; setPlaying(true); setTimeout(function(){ speakAt(i); },60); }
-function pause(){ token++; synth.cancel(); setPlaying(false); say((cur+1)+' 文めで止めました。'); }
+function start(i){ clearWatch(); synth.cancel(); token++; setPlaying(true); setTimeout(function(){ speakAt(i); },60); }
+function pause(){ clearWatch(); token++; synth.cancel(); setPlaying(false); say((cur+1)+' 文めで止めました。'); }
 
 function showView(){
   if(!src.value.trim()){ say('先に、文章をはりつけてください。'); return false; }
@@ -183,11 +211,11 @@ playBtn.addEventListener('click', function(){
   start(cur);
 });
 $('stop').addEventListener('click', function(){
-  token++; if(synth) synth.cancel(); cur=0; save('yomi.pos','0'); setPlaying(false);
+  clearWatch(); token++; if(synth) synth.cancel(); cur=0; save('yomi.pos','0'); setPlaying(false);
   spans.forEach(function(s){ s.classList.remove('on'); }); window.scrollTo(0,0); say('最初に戻しました。');
 });
 $('toedit').addEventListener('click', function(){
-  token++; if(synth) synth.cancel(); setPlaying(false); $('view').hidden=true; $('edit').hidden=false; window.scrollTo(0,0); say('');
+  clearWatch(); token++; if(synth) synth.cancel(); setPlaying(false); $('view').hidden=true; $('edit').hidden=false; window.scrollTo(0,0); say('');
 });
 $('clear').addEventListener('click', function(){ src.value=''; save('yomi.text',''); save('yomi.pos','0'); cur=0; say('文章を消しました。'); });
 reader.addEventListener('click', function(e){ var t=e.target; if(t && t.dataset && t.dataset.i!==undefined && synth){ start(parseInt(t.dataset.i,10)); } });
@@ -200,7 +228,7 @@ $('file').addEventListener('change', function(e){
   r.onerror=function(){ say('ファイルを読めませんでした。'); }; r.readAsText(f,'utf-8'); e.target.value='';
 });
 document.addEventListener('visibilitychange', function(){ if(document.hidden){ /* 画面が消えると止まることがある */ } else if(playing){ keepAwake(true); } });
-window.addEventListener('pagehide', function(){ if(synth) synth.cancel(); });
+window.addEventListener('pagehide', function(){ clearWatch(); if(synth) synth.cancel(); });
 
 src.value = load('yomi.text')||'';
 var r0=load('yomi.rate'); if(r0) rate.value=r0;
