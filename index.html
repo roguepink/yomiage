@@ -154,7 +154,37 @@ function keepAwake(on){
     else if(!on && wake){ wake.release(); wake=null; }
   }catch(e){}
 }
-function setPlaying(p){ playing=p; playBtn.textContent=p?'❚❚ 止める':(cur>0?'▶ つづきから':'▶ 読み上げ'); keepAwake(p); }
+/* 裏でも読み続けるための仕組み: 聞こえない音を流し続けて「音楽アプリ」として扱ってもらい、ロック画面にも操作を出す */
+var keeper=null;
+function makeSilence(){
+  var n=8000, b=new Uint8Array(44+n*2), dv=new DataView(b.buffer);
+  function w(o,s){ for(var i=0;i<s.length;i++) dv.setUint8(o+i,s.charCodeAt(i)); }
+  w(0,'RIFF'); dv.setUint32(4,36+n*2,true); w(8,'WAVEfmt '); dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+  dv.setUint32(24,8000,true); dv.setUint32(28,16000,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true); w(36,'data'); dv.setUint32(40,n*2,true);
+  for(var i=0;i<n;i++) dv.setInt16(44+i*2,(i%2?1:-1),true); /* ほぼ無音(聞こえない小ささ) */
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'}));
+}
+function keepAlive(on){
+  try{
+    if(on){
+      if(!keeper){ keeper=new Audio(makeSilence()); keeper.loop=true; keeper.volume=0.05; }
+      var pr=keeper.play(); if(pr && pr.catch) pr.catch(function(){});
+    } else if(keeper){ keeper.pause(); }
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState = on?'playing':'paused';
+  }catch(e){}
+}
+function setupMediaSession(){
+  if(!('mediaSession' in navigator)) return;
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({title:'よみあげ', artist:'文章を読んでいます', artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}]});
+    var h=function(n,f){ try{ navigator.mediaSession.setActionHandler(n,f); }catch(e){} };
+    h('play',function(){ if(!playing && synth && sents.length) start(cur); });
+    h('pause',function(){ if(playing) pause(); });
+    h('previoustrack',function(){ if(synth && sents.length) start(Math.max(0,cur-1)); });
+    h('nexttrack',function(){ if(synth && sents.length) start(Math.min(sents.length-1,cur+1)); });
+  }catch(e){}
+}
+function setPlaying(p){ playing=p; playBtn.textContent=p?'❚❚ 止める':(cur>0?'▶ つづきから':'▶ 読み上げ'); keepAwake(p); keepAlive(p); }
 
 var watch=null, endWatch=null;
 function clearWatch(){ if(watch){ clearTimeout(watch); watch=null; } if(endWatch){ clearTimeout(endWatch); endWatch=null; } }
@@ -228,8 +258,9 @@ $('file').addEventListener('change', function(e){
   r.onerror=function(){ say('ファイルを読めませんでした。'); }; r.readAsText(f,'utf-8'); e.target.value='';
 });
 document.addEventListener('visibilitychange', function(){ if(document.hidden){ /* 画面が消えると止まることがある */ } else if(playing){ keepAwake(true); } });
-window.addEventListener('pagehide', function(){ clearWatch(); if(synth) synth.cancel(); });
+window.addEventListener('pagehide', function(e){ if(e && e.persisted) return; clearWatch(); if(synth) synth.cancel(); });
 
+setupMediaSession();
 src.value = load('yomi.text')||'';
 var r0=load('yomi.rate'); if(r0) rate.value=r0;
 cur = parseInt(load('yomi.pos')||'0',10)||0; if(cur>0) playBtn.textContent='▶ つづきから';
