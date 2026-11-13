@@ -21,45 +21,75 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-  :root { color-scheme: dark; --bg:#140c2a; --card:#21173f; --fg:#f4f0ff; --sub:#b9aedd; --accent:#ffe066; --hl:#4b3a86; }
+  :root { color-scheme: dark; --bg:#140c2a; --card:#21173f; --fg:#f4f0ff; --sub:#b9aedd; --accent:#ffe066; --hl:#4b3a86; --fs:1.2rem; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--fg);
     font-family: "Hiragino Sans","Noto Sans JP",system-ui,sans-serif; }
-  body { padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(190px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  body { padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(200px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   main { max-width: 36em; margin: 0 auto; }
-  h1 { font-size: 1.4rem; margin: 18px 0 4px; }
+  h1 { font-size: 1.4rem; margin: 18px 0 4px; flex: 1; }
+  .top { display: flex; align-items: center; gap: 8px; }
+  .top button { min-height: 44px; padding: 0 12px; font-size: .95rem; margin-top: 12px; }
   .sub { color: var(--sub); font-size: .9rem; line-height: 1.7; margin: 0 0 14px; }
-  textarea { width: 100%; min-height: 38vh; font: inherit; font-size: 1.05rem; line-height: 1.8; padding: 12px; border-radius: 12px;
+  textarea { width: 100%; min-height: 38vh; font: inherit; font-size: calc(var(--fs) * .88); line-height: 1.8; padding: 12px; border-radius: 12px;
     border: 2px solid #3a2d6a; background: var(--card); color: var(--fg); resize: vertical; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
-  button, .filebtn, select { font: inherit; min-height: 52px; border-radius: 12px; border: 2px solid #3a2d6a; background: var(--card); color: var(--fg); padding: 0 16px; font-size: 1rem; touch-action: manipulation; }
-  button.main { background: var(--accent); color: #1b1430; border-color: var(--accent); font-weight: 800; flex: 1; font-size: 1.15rem; }
+  button, .filebtn, select, input[type=text] { font: inherit; min-height: 52px; border-radius: 12px; border: 2px solid #3a2d6a; background: var(--card); color: var(--fg); padding: 0 16px; font-size: 1rem; touch-action: manipulation; }
+  button.main { background: var(--accent); color: #1b1430; border-color: var(--accent); font-weight: 800; flex: 1; font-size: 1.15rem; padding: 0 8px; }
+  button.ic { padding: 0; min-width: 52px; font-size: 1.05rem; }
+  button.ic small { display: block; font-size: .62rem; line-height: 1; margin-top: 2px; color: var(--sub); }
   .filebtn { display: inline-flex; align-items: center; cursor: pointer; }
   .filebtn input { display: none; }
-  button:focus-visible, select:focus-visible, textarea:focus-visible, .filebtn:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+  button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible, .filebtn:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
   label { font-size: .9rem; color: var(--sub); display: flex; gap: 6px; align-items: center; }
-  #reader { font-size: 1.2rem; line-height: 2; }
+  #reader { font-size: var(--fs); line-height: 2; }
   #reader p { margin: 0 0 1em; }
   #reader span { cursor: pointer; border-radius: 6px; }
   #reader span.on { background: var(--hl); color: #fff; }
   .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #1c1236; border-top: 2px solid #3a2d6a;
     padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); z-index: 5; }
   .bar .in { max-width: 36em; margin: 0 auto; }
-  .bar .row { margin: 0 0 8px; }
+  .bar .row { margin: 0 0 8px; flex-wrap: nowrap; }
+  .bar select { padding: 0 6px; flex: 1; min-width: 0; width: 100%; }
+  .bar label { flex: 1; min-width: 0; white-space: nowrap; }
   #msg { margin: 0; font-size: .85rem; color: var(--sub); min-height: 1.4em; }
+  #moon { color: var(--accent); font-size: .85rem; white-space: nowrap; }
   .back { margin-bottom: 8px; }
+  /* 本棚・設定の画面(上にかぶせる) */
+  .sheet { position: fixed; inset: 0; background: rgba(8,4,20,.82); z-index: 20; overflow-y: auto;
+    padding: calc(16px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  .sheet .box { max-width: 36em; margin: 0 auto; background: #1c1236; border: 2px solid #3a2d6a; border-radius: 16px; padding: 16px; }
+  .sheet h2 { font-size: 1.2rem; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .sheet h2 span { flex: 1; }
+  .sheet h3 { font-size: 1rem; margin: 18px 0 6px; color: var(--accent); }
+  .sheet .note { color: var(--sub); font-size: .85rem; line-height: 1.6; margin: 0 0 8px; }
+  .book { display: flex; gap: 8px; align-items: stretch; margin: 0 0 8px; }
+  .book button.open { flex: 1; text-align: left; padding: 8px 12px; line-height: 1.4; }
+  .book button.open.now { border-color: var(--accent); }
+  .book .t { display: block; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .book .m { display: block; font-size: .8rem; color: var(--sub); }
+  .book button.del { padding: 0 12px; font-size: .9rem; white-space: nowrap; flex-shrink: 0; }
+  .book button.open { min-width: 0; }
+  .pair { display: flex; gap: 6px; align-items: center; margin: 0 0 6px; }
+  .pair input { flex: 1; min-width: 0; padding: 0 10px; }
+  .pair .ar { color: var(--sub); }
+  .pair button { padding: 0 12px; }
+  .dw { display: flex; gap: 6px; align-items: center; margin: 0 0 6px; padding: 6px 10px; background: var(--card); border-radius: 10px; }
+  .dw b { flex: 1; font-weight: 400; overflow-wrap: anywhere; }
+  .dw button { min-height: 40px; padding: 0 10px; font-size: .85rem; }
   @media (orientation: landscape) and (max-height: 520px) {
     body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
     main { max-width: 48em; }
     h1 { font-size: 1.15rem; margin: 8px 0 2px; }
     .sub { font-size: .8rem; line-height: 1.5; margin-bottom: 8px; }
     textarea { min-height: 34vh; }
-    #reader { font-size: 1.1rem; line-height: 1.9; }
+    #reader { line-height: 1.9; }
     button, .filebtn, select { min-height: 44px; }
+    button.ic { min-width: 44px; }
     .bar { padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
     .bar .in { max-width: 60em; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
-    .bar .row { margin: 0; flex-wrap: nowrap; }
-    .bar .row:first-child { flex: 1 1 260px; }
+    .bar .row { margin: 0; }
+    .bar .row:first-child { flex: 1 1 300px; }
     #msg { flex: 1 1 100%; font-size: .75rem; min-height: 0; line-height: 1.2; }
     button.main { font-size: 1.05rem; }
   }
@@ -68,46 +98,145 @@
 <body>
 <main>
   <section id="edit">
-    <h1>📖 よみあげ</h1>
+    <div class="top"><h1>📖 よみあげ</h1><button id="toshelf" type="button">📚 本棚</button></div>
     <p class="sub">読みたい文章を、下にはりつけてください。ボタンを押すと、スマホの声で読んでくれます。<br>文章は、このスマホの中だけに残ります。どこにも送りません。</p>
     <textarea id="src" placeholder="ここに文章をはりつけ" aria-label="読み上げる文章"></textarea>
     <div class="row">
       <label class="filebtn">📄 ファイルをえらぶ<input id="file" type="file" accept=".txt,.md,text/plain,text/markdown"></label>
+      <button id="newbook" type="button">＋ 新しい文章</button>
       <button id="clear" type="button">消す</button>
     </div>
   </section>
   <section id="view" hidden>
-    <div class="row back"><button id="toedit" type="button">← 文章をなおす</button></div>
+    <div class="row back"><button id="toedit" type="button">← 文章をなおす</button><button id="toshelf2" type="button">📚 本棚</button></div>
     <div id="reader" lang="ja"></div>
   </section>
 </main>
+
 <div class="bar"><div class="in">
   <div class="row">
+    <button class="ic" id="back10" type="button" aria-label="10秒もどる">⟲<small>10秒</small></button>
+    <button class="ic" id="prev" type="button" aria-label="1つ前の文">⏮<small>前の文</small></button>
     <button class="main" id="play" type="button">▶ 読み上げ</button>
-    <button id="stop" type="button">■ 最初へ</button>
+    <button class="ic" id="next" type="button" aria-label="次の文">⏭<small>次の文</small></button>
   </div>
   <div class="row">
     <label for="rate">速さ <select id="rate"><option value="0.8">ゆっくり</option><option value="1" selected>ふつう</option><option value="1.2">少し速い</option><option value="1.5">速い</option><option value="1.8">とても速い</option><option value="2.2">かなり速い</option><option value="2.6">いちばん速い</option></select></label>
-    <label for="voice">声 <select id="voice"></select></label>
+    <label for="timer">🌙 <select id="timer" aria-label="おやすみタイマー"><option value="0">タイマーなし</option><option value="15">15分</option><option value="30">30分</option><option value="45">45分</option><option value="60">1時間</option><option value="90">1時間半</option></select></label>
+    <button class="ic" id="toset" type="button" aria-label="設定">⚙<small>設定</small></button>
   </div>
   <p id="msg" role="status"></p>
 </div></div>
+
+<!-- 本棚 -->
+<div class="sheet" id="shelf" hidden><div class="box">
+  <h2><span>📚 本棚</span><button id="shelfclose" type="button">とじる</button></h2>
+  <p class="note">取っておいた文章です。押すと開きます。それぞれ、止めたところから続きを読めます。</p>
+  <div id="books"></div>
+  <div class="row"><button id="newbook2" type="button">＋ 新しい文章</button></div>
+</div></div>
+
+<!-- 設定 -->
+<div class="sheet" id="settings" hidden><div class="box">
+  <h2><span>⚙ 設定</span><button id="setclose" type="button">とじる</button></h2>
+  <h3>声</h3>
+  <div class="row"><select id="voice" aria-label="声"></select></div>
+  <h3>文字の大きさ</h3>
+  <div class="row"><select id="fsize" aria-label="文字の大きさ"><option value="1">小さめ</option><option value="1.2" selected>ふつう</option><option value="1.45">大きめ</option><option value="1.8">とても大きい</option><option value="2.2">いちばん大きい</option></select></div>
+  <h3>読み方の直し</h3>
+  <p class="note">スマホが読み間違える名前や言葉を、正しい読み方で登録できます。画面の字はそのままで、声だけが変わります。どの文章にも効きます。<br>例: 憲人 → けんと</p>
+  <div class="pair"><input id="dw" type="text" placeholder="書いてある字" aria-label="書いてある字"><span class="ar">→</span><input id="dr" type="text" placeholder="読み方(ひらがな)" aria-label="読み方"></div>
+  <div class="row"><button id="dadd" type="button">＋ 登録する</button><button id="dtest" type="button">🔊 ためしに聞く</button></div>
+  <div id="dlist"></div>
+</div></div>
+
 <script>
 (function(){
 'use strict';
 var synth = window.speechSynthesis;
 var $ = function(id){ return document.getElementById(id); };
 var src=$('src'), reader=$('reader'), msg=$('msg'), playBtn=$('play');
-var rate=$('rate'), vsel=$('voice');
-var sents=[], spans=[], cur=0, playing=false, token=0, voices=[], wake=null;
+var rate=$('rate'), vsel=$('voice'), timerSel=$('timer'), fsize=$('fsize');
+var sents=[], spans=[], cur=0, playing=false, token=0, voices=[], wake=null, sentStart=0;
 
-function save(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function save(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
 function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function say(t){ msg.textContent=t; }
 
+/* ===== 本棚: 文章をいくつも取っておく。それぞれ「どこまで読んだか」を覚える ===== */
+var books=[], curId='';
+function loadBooks(){
+  try{ books=JSON.parse(load('yomi.books')||'[]')||[]; }catch(e){ books=[]; }
+  curId=load('yomi.cur')||'';
+  /* 前の版(文章1つだけ)からの引っこし */
+  if(!books.length){ var old=load('yomi.text'); if(old && old.trim()){ books=[{id:newId(), text:old, pos:parseInt(load('yomi.pos')||'0',10)||0, t:Date.now()}]; curId=books[0].id; saveBooks(); } }
+  if(!getBook(curId)) curId = books.length? books[0].id : '';
+}
+function newId(){ return 'b'+Date.now().toString(36)+Math.floor(Math.random()*1000); }
+function getBook(id){ for(var i=0;i<books.length;i++) if(books[i].id===id) return books[i]; return null; }
+function saveBooks(){
+  var ok=save('yomi.books', JSON.stringify(books)) && save('yomi.cur', curId);
+  if(!ok) say('スマホの保存場所がいっぱいです。本棚の古い文章を消してください。');
+  return ok;
+}
+function titleOf(text){ var l=(text||'').split(/\n/); for(var i=0;i<l.length;i++){ var t=l[i].trim(); if(t) return t.length>28? t.slice(0,28)+'…' : t; } return '(からっぽ)'; }
+function curBook(){ return getBook(curId); }
+function setText(text){ /* はりつけた文章を、今の本に入れる(本がなければ作る) */
+  var b=curBook();
+  if(!b){ if(!text.trim()) return; b={id:newId(), text:'', pos:0, t:Date.now()}; books.unshift(b); curId=b.id; }
+  b.text=text; b.pos=0; b.t=Date.now(); cur=0; saveBooks();
+}
+function savePos(i){ var b=curBook(); if(b){ b.pos=i; b.t=Date.now(); saveBooks(); } }
+function openBook(id){
+  stopAll(); curId=id; var b=curBook(); save('yomi.cur',curId);
+  src.value=b? b.text : ''; cur=b? (b.pos||0) : 0;
+  hideSheets(); if(b && b.text.trim()){ showView(); if(cur>0 && spans[cur]){ mark(cur); } setPlaying(false); say(cur>0? 'つづき('+(cur+1)+' 文め)から読めます。' : '「▶ 読み上げ」を押してください。'); }
+  else showEdit();
+}
+function newBook(){ stopAll(); var b={id:newId(), text:'', pos:0, t:Date.now()}; books.unshift(b); curId=b.id; saveBooks(); src.value=''; cur=0; hideSheets(); showEdit(); setPlaying(false); src.focus(); say('新しい文章をはりつけてください。'); }
+function fmtDate(t){ var d=new Date(t); return (d.getMonth()+1)+'月'+d.getDate()+'日'; }
+function renderShelf(){
+  var box=$('books'); box.innerHTML='';
+  books=books.filter(function(b){ return b.text && b.text.trim() || b.id===curId; });
+  if(!books.length){ box.innerHTML='<p class="note">まだ何もありません。</p>'; return; }
+  books.slice().sort(function(a,b){ return b.t-a.t; }).forEach(function(b){
+    var n=splitText(b.text).length||1, pct=Math.min(100,Math.round((b.pos||0)/n*100));
+    var row=document.createElement('div'); row.className='book';
+    var o=document.createElement('button'); o.type='button'; o.className='open'+(b.id===curId?' now':'');
+    var t=document.createElement('span'); t.className='t'; t.textContent=titleOf(b.text);
+    var m=document.createElement('span'); m.className='m'; m.textContent=(b.id===curId?'いま開いている ・ ':'')+fmtDate(b.t)+' ・ '+(pct>0? pct+'% まで読んだ' : 'まだ読んでいない');
+    o.appendChild(t); o.appendChild(m); o.addEventListener('click', function(){ openBook(b.id); });
+    var d=document.createElement('button'); d.type='button'; d.className='del'; d.textContent='消す';
+    d.addEventListener('click', function(){ if(!confirm('「'+titleOf(b.text)+'」を本棚から消します。もとに戻せません。よろしいですか?')) return;
+      books=books.filter(function(x){ return x.id!==b.id; }); if(curId===b.id){ stopAll(); curId=books.length? books[0].id : ''; var c=curBook(); src.value=c? c.text:''; cur=c? c.pos||0:0; showEdit(); }
+      saveBooks(); renderShelf(); });
+    row.appendChild(o); row.appendChild(d); box.appendChild(row);
+  });
+}
+
+/* ===== 読み方の直し ===== */
+var dict=[];
+function loadDict(){ try{ dict=JSON.parse(load('yomi.dict')||'[]')||[]; }catch(e){ dict=[]; } }
+function saveDict(){ dict.sort(function(a,b){ return b.w.length-a.w.length; }); save('yomi.dict', JSON.stringify(dict)); }
+function applyDict(t){ for(var i=0;i<dict.length;i++){ if(dict[i].w) t=t.split(dict[i].w).join(dict[i].r); } return t; }
+function renderDict(){
+  var box=$('dlist'); box.innerHTML='';
+  if(!dict.length){ box.innerHTML='<p class="note">まだ登録はありません。</p>'; return; }
+  dict.forEach(function(d,i){
+    var row=document.createElement('div'); row.className='dw';
+    var b=document.createElement('b'); b.textContent=d.w+'  →  '+d.r;
+    var p=document.createElement('button'); p.type='button'; p.textContent='🔊'; p.setAttribute('aria-label','聞く');
+    p.addEventListener('click', function(){ testSay(d.r); });
+    var x=document.createElement('button'); x.type='button'; x.textContent='消す';
+    x.addEventListener('click', function(){ dict.splice(i,1); saveDict(); renderDict(); });
+    row.appendChild(b); row.appendChild(p); row.appendChild(x); box.appendChild(row);
+  });
+}
+function testSay(t){ if(!synth) return; stopAll(); var u=new SpeechSynthesisUtterance(t); u.lang='ja-JP'; u.rate=parseFloat(rate.value)||1; if(voices.length && voices[vsel.value]) u.voice=voices[vsel.value]; synth.speak(u); }
+
 /* 文を区切る: 。！？ のあとで切る。長すぎる文は 読点で さらに切る(Chrome は長い読み上げが途中で止まるため) */
 function splitText(text){
-  var out=[], paras=text.replace(/\r/g,'').split(/\n+/);
+  var out=[], paras=(text||'').replace(/\r/g,'').split(/\n+/);
   paras.forEach(function(p,pi){
     p=p.trim(); if(!p) return;
     var parts=p.match(/[^。！？!?]+[。！？!?」』）)]*|[。！？!?]+/g)||[p];
@@ -117,15 +246,14 @@ function splitText(text){
       if(x.length>80){ (x.match(/[^、，,]+[、，,]?/g)||[x]).forEach(function(y){ buf.push(y); }); }
       else buf.push(x);
     });
-    buf.forEach(function(x,i){ out.push({t:x, p:pi}); });
+    buf.forEach(function(x){ out.push({t:x, p:pi}); });
   });
   return out;
 }
-function spoken(t){ return t.replace(/――|──|—+/g,'、').replace(/…+|\.{3,}/g,'、').replace(/[〈〉《》「」『』]/g,'').replace(/\s+/g,' '); }
+function spoken(t){ t=applyDict(t); return t.replace(/――|──|—+/g,'、').replace(/…+|\.{3,}/g,'、').replace(/[〈〉《》「」『』]/g,'').replace(/\s+/g,' '); }
 
 function build(){
-  var text=src.value; save('yomi.text',text);
-  sents=splitText(text); reader.innerHTML=''; spans=[];
+  sents=splitText(src.value); reader.innerHTML=''; spans=[];
   var lastP=-1, pEl=null;
   sents.forEach(function(s,i){
     if(s.p!==lastP){ pEl=document.createElement('p'); reader.appendChild(pEl); lastP=s.p; }
@@ -136,7 +264,7 @@ function mark(i){
   spans.forEach(function(s){ s.classList.remove('on'); });
   var s=spans[i]; if(!s) return; s.classList.add('on');
   var r=s.getBoundingClientRect(), h=window.innerHeight;
-  if(r.top<70||r.bottom>h-(window.innerHeight<520?110:200)){ window.scrollTo({top:window.scrollY+r.top-h*0.3, behavior:'smooth'}); }
+  if(r.top<70||r.bottom>h-(window.innerHeight<520?110:210)){ window.scrollTo({top:window.scrollY+r.top-h*0.3, behavior:'smooth'}); }
 }
 
 function loadVoices(){
@@ -180,11 +308,37 @@ function setupMediaSession(){
     var h=function(n,f){ try{ navigator.mediaSession.setActionHandler(n,f); }catch(e){} };
     h('play',function(){ if(!playing && synth && sents.length) start(cur); });
     h('pause',function(){ if(playing) pause(); });
-    h('previoustrack',function(){ if(synth && sents.length) start(Math.max(0,cur-1)); });
-    h('nexttrack',function(){ if(synth && sents.length) start(Math.min(sents.length-1,cur+1)); });
+    h('previoustrack',function(){ jump(-1); });
+    h('nexttrack',function(){ jump(1); });
+    h('seekbackward',function(){ back10(); });
   }catch(e){}
 }
 function setPlaying(p){ playing=p; playBtn.textContent=p?'❚❚ 止める':(cur>0?'▶ つづきから':'▶ 読み上げ'); keepAwake(p); keepAlive(p); }
+
+/* ===== おやすみタイマー ===== */
+var timerEnd=0, timerTick=null;
+function setTimer(min){
+  timerEnd = min>0? Date.now()+min*60000 : 0; save('yomi.timer', String(min));
+  if(timerTick){ clearInterval(timerTick); timerTick=null; }
+  if(timerEnd){ timerTick=setInterval(checkTimer, 15000); }
+  showTimer();
+}
+function showTimer(){
+  if(!timerEnd){ return; }
+  var left=Math.max(0,Math.ceil((timerEnd-Date.now())/60000));
+  var o=timerSel.options[0]; o.textContent='タイマーなし';
+  timerSel.options[timerSel.selectedIndex].textContent='あと'+left+'分';
+}
+function resetTimerLabels(){ var L=['タイマーなし','15分','30分','45分','1時間','1時間半']; for(var i=0;i<timerSel.options.length;i++) timerSel.options[i].textContent=L[i]; }
+function checkTimer(){
+  if(!timerEnd) return false;
+  if(Date.now()>=timerEnd){
+    timerEnd=0; if(timerTick){ clearInterval(timerTick); timerTick=null; } resetTimerLabels(); timerSel.value='0';
+    if(playing){ pause(); say('🌙 おやすみタイマーで止めました。'+(cur+1)+' 文めから、つづきを読めます。'); }
+    return true;
+  }
+  showTimer(); return false;
+}
 
 var watch=null, endWatch=null;
 function clearWatch(){ if(watch){ clearTimeout(watch); watch=null; } if(endWatch){ clearTimeout(endWatch); endWatch=null; } }
@@ -198,8 +352,9 @@ function errText(c){
 }
 function speakAt(i, retry){
   clearWatch();
-  if(i>=sents.length){ cur=0; setPlaying(false); say('おわりです。'); save('yomi.pos','0'); return; }
-  cur=i; mark(i); save('yomi.pos',String(i));
+  if(i>=sents.length){ cur=0; setPlaying(false); say('おわりです。'); savePos(0); return; }
+  if(checkTimer()) return;
+  cur=i; mark(i); savePos(i); sentStart=Date.now();
   var txt=spoken(sents[i].t);
   /* 読む字がない行(記号だけ)は、読まずに次へ。空の読み上げは スマホで止まることがある */
   if(!/[^\s、。,.!?！？]/.test(txt)){ speakAt(i+1); return; }
@@ -208,7 +363,7 @@ function speakAt(i, retry){
   u.lang='ja-JP'; u.rate=parseFloat(rate.value)||1;
   /* 2回目(やり直し)は 声を指定しない。スマホの標準の声で読む */
   if(!retry && voices.length && voices[vsel.value]) u.voice=voices[vsel.value];
-  u.onstart=function(){ if(my!==token) return; started=true; if(watch){ clearTimeout(watch); watch=null; } };
+  u.onstart=function(){ if(my!==token) return; started=true; sentStart=Date.now(); if(watch){ clearTimeout(watch); watch=null; } };
   u.onend=function(){ if(my!==token) return; clearWatch(); if(playing) speakAt(i+1); };
   u.onerror=function(e){ if(my!==token) return; clearWatch();
     if(e && (e.error==='canceled'||e.error==='interrupted')) return;
@@ -227,52 +382,106 @@ function speakAt(i, retry){
     token++; try{ synth.cancel(); }catch(x){} setTimeout(function(){ if(playing) speakAt(i+1); },200);
   }, Math.round((txt.length*0.7/(u.rate||1)+12)*1000));
 }
-function start(i){ clearWatch(); synth.cancel(); token++; setPlaying(true); setTimeout(function(){ speakAt(i); },60); }
+function start(i){ if(!synth) return; clearWatch(); synth.cancel(); token++; setPlaying(true); setTimeout(function(){ speakAt(i); },60); }
 function pause(){ clearWatch(); token++; synth.cancel(); setPlaying(false); say((cur+1)+' 文めで止めました。'); }
+function stopAll(){ clearWatch(); token++; if(synth) synth.cancel(); if(playing) setPlaying(false); }
 
+/* ===== もどる・すすむ ===== */
+function ensureView(){ if($('view').hidden){ var b=curBook(); if(!showView()) return false; cur=(b&&b.pos>0&&b.pos<sents.length)? b.pos : 0; } return sents.length>0; }
+function goTo(i){ i=Math.max(0,Math.min(sents.length-1,i)); cur=i; savePos(i); if(playing) start(i); else { mark(i); setPlaying(false); say((i+1)+' / '+sents.length+' 文め。「▶」で ここから読みます。'); } }
+function jump(d){ if(!synth || !ensureView()) return; goTo(cur+d); }
+/* 10秒もどる: 読む速さから、10秒ぶんの字数を見積もって、その分だけ前の文から読み直す */
+function back10(){
+  if(!synth || !ensureView()) return;
+  var cps=6.5*(parseFloat(rate.value)||1), need=10*cps;
+  var spent = playing? (Date.now()-sentStart)/1000*cps : 0;
+  var j=cur;
+  if(spent<need){ var acc=spent; while(j>0 && acc<need){ j--; acc+=spoken(sents[j].t).length; } }
+  goTo(j);
+}
+
+/* ===== 画面の切りかえ ===== */
 function showView(){
   if(!src.value.trim()){ say('先に、文章をはりつけてください。'); return false; }
   build(); $('edit').hidden=true; $('view').hidden=false; window.scrollTo(0,0); return true;
 }
+function showEdit(){ $('view').hidden=true; $('edit').hidden=false; window.scrollTo(0,0); }
+function hideSheets(){ $('shelf').hidden=true; $('settings').hidden=true; }
+function openShelf(){ renderShelf(); $('settings').hidden=true; $('shelf').hidden=false; }
+
 playBtn.addEventListener('click', function(){
   if(!synth){ say('この画面では読み上げが使えません。Chrome で開いてください。'); return; }
   if(playing){ pause(); return; }
-  if($('view').hidden){ var sp=parseInt(load('yomi.pos')||'0',10); if(!showView()) return; cur = (sp>0&&sp<sents.length)?sp:0; }
+  if(!ensureView()) return;
   start(cur);
 });
-$('stop').addEventListener('click', function(){
-  clearWatch(); token++; if(synth) synth.cancel(); cur=0; save('yomi.pos','0'); setPlaying(false);
-  spans.forEach(function(s){ s.classList.remove('on'); }); window.scrollTo(0,0); say('最初に戻しました。');
-});
-$('toedit').addEventListener('click', function(){
-  clearWatch(); token++; if(synth) synth.cancel(); setPlaying(false); $('view').hidden=true; $('edit').hidden=false; window.scrollTo(0,0); say('');
-});
-$('clear').addEventListener('click', function(){ src.value=''; save('yomi.text',''); save('yomi.pos','0'); cur=0; say('文章を消しました。'); });
+$('back10').addEventListener('click', back10);
+$('prev').addEventListener('click', function(){ jump(-1); });
+$('next').addEventListener('click', function(){ jump(1); });
+$('toedit').addEventListener('click', function(){ stopAll(); showEdit(); say(''); });
+$('clear').addEventListener('click', function(){ if(src.value.trim() && !confirm('この文章を消します。よろしいですか?')) return; src.value=''; setText(''); say('文章を消しました。'); });
+$('newbook').addEventListener('click', newBook);
+$('newbook2').addEventListener('click', newBook);
+$('toshelf').addEventListener('click', openShelf);
+$('toshelf2').addEventListener('click', openShelf);
+$('shelfclose').addEventListener('click', hideSheets);
+$('toset').addEventListener('click', function(){ renderDict(); $('shelf').hidden=true; $('settings').hidden=false; });
+$('setclose').addEventListener('click', function(){ hideSheets(); });
 reader.addEventListener('click', function(e){ var t=e.target; if(t && t.dataset && t.dataset.i!==undefined && synth){ start(parseInt(t.dataset.i,10)); } });
 rate.addEventListener('change', function(){ save('yomi.rate',rate.value); if(playing) start(cur); });
 vsel.addEventListener('change', function(){ if(voices[vsel.value]) save('yomi.voice',voices[vsel.value].name); if(playing) start(cur); });
-src.addEventListener('input', function(){ save('yomi.text',src.value); save('yomi.pos','0'); cur=0; });
+fsize.addEventListener('change', function(){ document.documentElement.style.setProperty('--fs', fsize.value+'rem'); save('yomi.fs', fsize.value); });
+timerSel.addEventListener('change', function(){ resetTimerLabels(); setTimer(parseInt(timerSel.value,10)||0); if(timerEnd) say('🌙 '+timerSel.options[timerSel.selectedIndex].textContent.replace('あと','')+'たったら、読み上げを止めます。'); else say('タイマーを切りました。'); });
+var typing=null;
+src.addEventListener('input', function(){ if(typing) clearTimeout(typing); typing=setTimeout(function(){ setText(src.value); },400); });
 $('file').addEventListener('change', function(e){
   var f=e.target.files&&e.target.files[0]; if(!f) return;
-  var r=new FileReader(); r.onload=function(){ src.value=String(r.result||''); save('yomi.text',src.value); save('yomi.pos','0'); cur=0; say('「'+f.name+'」を読みこみました。'); };
+  var r=new FileReader(); r.onload=function(){ var t=String(r.result||''); var b={id:newId(), text:t, pos:0, t:Date.now()}; books.unshift(b); curId=b.id; src.value=t; cur=0; saveBooks(); say('「'+f.name+'」を読みこんで、本棚に入れました。'); };
   r.onerror=function(){ say('ファイルを読めませんでした。'); }; r.readAsText(f,'utf-8'); e.target.value='';
 });
-document.addEventListener('visibilitychange', function(){ if(document.hidden){ /* 画面が消えると止まることがある */ } else if(playing){ keepAwake(true); } });
+$('dadd').addEventListener('click', function(){
+  var w=$('dw').value.trim(), r=$('dr').value.trim();
+  if(!w || !r){ say('「書いてある字」と「読み方」の両方を入れてください。'); return; }
+  dict=dict.filter(function(d){ return d.w!==w; }); dict.push({w:w, r:r}); saveDict(); renderDict();
+  $('dw').value=''; $('dr').value='';
+  say('「'+w+'」を「'+r+'」と読むように登録しました。'+(w.length<2? '(1文字だけの登録は、ほかの言葉の中の同じ字も変わります)':''));
+});
+$('dtest').addEventListener('click', function(){ var r=$('dr').value.trim()||$('dw').value.trim(); if(r) testSay(r); });
+document.addEventListener('visibilitychange', function(){ if(!document.hidden){ if(playing) keepAwake(true); checkTimer(); } });
 window.addEventListener('pagehide', function(e){ if(e && e.persisted) return; clearWatch(); if(synth) synth.cancel(); });
 
+/* ===== ほかのアプリから「共有」で送られてきた文章を受けとる ===== */
+function takeShared(){
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ return false; }
+  if(!q.has('text') && !q.has('title') && !q.has('url')) return false;
+  var text=(q.get('text')||'').trim(), title=(q.get('title')||'').trim(), url=(q.get('url')||'').trim();
+  try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  if(!text || /^https?:\/\/\S+$/.test(text)){
+    say('送られてきたのはページのアドレスだけでした。読みたい文字を長押しで選んでから「共有」→「よみあげ」を押すと読めます。'); return true;
+  }
+  if(title && text.indexOf(title)!==0) text=title+'\n'+text;
+  for(var i=0;i<books.length;i++){ if(books[i].text===text){ openBook(books[i].id); say('この文章は本棚にありました。「▶ 読み上げ」を押してください。'); return true; } }
+  stopAll(); var b={id:newId(), text:text, pos:0, t:Date.now()}; books.unshift(b); curId=b.id; saveBooks();
+  src.value=text; cur=0; showView(); setPlaying(false); say('共有された文章を本棚に入れました。「▶ 読み上げ」を押してください。');
+  return true;
+}
+
 setupMediaSession();
-src.value = load('yomi.text')||'';
+loadDict(); loadBooks();
+var cb=curBook(); src.value = cb? cb.text : ''; cur = cb? (cb.pos||0) : 0;
 var r0=load('yomi.rate'); if(r0) rate.value=r0;
-cur = parseInt(load('yomi.pos')||'0',10)||0; if(cur>0) playBtn.textContent='▶ つづきから';
+var f0=load('yomi.fs'); if(f0){ fsize.value=f0; document.documentElement.style.setProperty('--fs', f0+'rem'); }
+if(cur>0) playBtn.textContent='▶ つづきから';
 if(!synth){ say('この画面では読み上げが使えません。Chrome で開いてください。'); }
-else { loadVoices(); if(synth.onvoiceschanged!==undefined) synth.onvoiceschanged=loadVoices; if(!src.value) say('文章をはりつけて「読み上げ」を押してください。'); }
+else { loadVoices(); if(synth.onvoiceschanged!==undefined) synth.onvoiceschanged=loadVoices; }
+if(!takeShared() && synth && !src.value) say('文章をはりつけて「読み上げ」を押してください。');
 if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
-window.__yomi = { splitText: splitText };
+window.__yomi = { splitText: splitText, spoken: spoken, books: function(){ return books; } };
 })();
 </script>
 <script>
   window.INSTALL_GATE = { id: 'yomiage', name: 'よみあげ', icon: 'icon-192.png', tagline: '文章を、声で読んでくれる', desc: '読みたい文章をはりつけると、スマホの声で読み上げてくれます。',
-    points: ['無料・広告なし・登録なし', '文章はスマホの中だけに残ります', '止めたところから、つづきを読めます'], shots: [], badges: ['無料', '広告なし', '登録なし'], playLabel: '▶ このまま読む', installLabel: '📲 インストール' };
+    points: ['無料・広告なし・登録なし', '文章はスマホの中だけに残ります', '本棚に取っておいて、止めたところから続きを読めます', 'インストールすると、ほかのアプリから「共有」で送るだけで読めます(Android)'], shots: [], badges: ['無料', '広告なし', '登録なし'], playLabel: '▶ このまま読む', installLabel: '📲 インストール' };
 </script>
 <script src="install.js"></script>
 </body>
