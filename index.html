@@ -31,7 +31,7 @@
   .top { display: flex; align-items: center; gap: 8px; }
   .top button { min-height: 44px; padding: 0 12px; font-size: .95rem; margin-top: 12px; }
   .sub { color: var(--sub); font-size: .9rem; line-height: 1.7; margin: 0 0 14px; }
-  textarea { width: 100%; min-height: 38vh; font: inherit; font-size: calc(var(--fs) * .88); line-height: 1.8; padding: 12px; border-radius: 12px;
+  textarea { width: 100%; min-height: 38vh; font: inherit; font-size: max(1rem, calc(var(--fs) * .88)); line-height: 1.8; padding: 12px; border-radius: 12px;
     border: 2px solid #3a2d6a; background: var(--card); color: var(--fg); resize: vertical; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
   button, .filebtn, select, input[type=text] { font: inherit; min-height: 52px; border-radius: 12px; border: 2px solid #3a2d6a; background: var(--card); color: var(--fg); padding: 0 16px; font-size: 1rem; touch-action: manipulation; }
@@ -77,6 +77,13 @@
   .dw { display: flex; gap: 6px; align-items: center; margin: 0 0 6px; padding: 6px 10px; background: var(--card); border-radius: 10px; }
   .dw b { flex: 1; font-weight: 400; overflow-wrap: anywhere; }
   .dw button { min-height: 40px; padding: 0 10px; font-size: .85rem; }
+  @media (max-width: 360px) {
+    .bar .row { gap: 6px; }
+    button.ic { min-width: 44px; font-size: .95rem; }
+    button.main { font-size: 1rem; white-space: nowrap; }
+    .bar .lb { display: none; }
+    .bar select { font-size: .9rem; padding: 0 4px; }
+  }
   @media (orientation: landscape) and (max-height: 520px) {
     body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
     main { max-width: 48em; }
@@ -121,7 +128,7 @@
     <button class="ic" id="next" type="button" aria-label="次の文">⏭<small>次の文</small></button>
   </div>
   <div class="row">
-    <label for="rate">速さ <select id="rate"><option value="0.8">ゆっくり</option><option value="1" selected>ふつう</option><option value="1.2">少し速い</option><option value="1.5">速い</option><option value="1.8">とても速い</option><option value="2.2">かなり速い</option><option value="2.6">いちばん速い</option></select></label>
+    <label for="rate"><span class="lb">速さ</span> <select id="rate" aria-label="読む速さ"><option value="0.8">ゆっくり</option><option value="1" selected>ふつう</option><option value="1.2">少し速い</option><option value="1.5">速い</option><option value="1.8">とても速い</option><option value="2.2">かなり速い</option><option value="2.6">いちばん速い</option></select></label>
     <label for="timer">🌙 <select id="timer" aria-label="おやすみタイマー"><option value="0">タイマーなし</option><option value="15">15分</option><option value="30">30分</option><option value="45">45分</option><option value="60">1時間</option><option value="90">1時間半</option></select></label>
     <button class="ic" id="toset" type="button" aria-label="設定">⚙<small>設定</small></button>
   </div>
